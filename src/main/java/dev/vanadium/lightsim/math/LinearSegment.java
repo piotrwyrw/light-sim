@@ -1,5 +1,6 @@
 package dev.vanadium.lightsim.math;
 
+import dev.vanadium.lightsim.ctl.ControlPointUtils;
 import dev.vanadium.lightsim.visual.View;
 
 import java.awt.*;
@@ -9,7 +10,7 @@ public class LinearSegment extends Mirror {
     private Vector origin;
     private Vector end;
 
-    private Color color;
+    private boolean renderEndpoints = true;
 
     public LinearSegment(Vector origin, Vector end) {
         this.origin = origin;
@@ -37,8 +38,8 @@ public class LinearSegment extends Mirror {
         this.end = end;
     }
 
-    public LinearSegment colored(Color c) {
-        this.color = c;
+    public LinearSegment noEndpoints() {
+        this.renderEndpoints = false;
         return this;
     }
 
@@ -82,7 +83,12 @@ public class LinearSegment extends Mirror {
         // To compensate for that, we need to check if the intersection is actually within the bounds
         // of the segment. If it isn't, there was technically no intersection, even if the equation
         // evaluates to a valid point.
-        if (s < 0 || s >= end.copy().sub(origin).magnitude()) {
+        if (s <= 0 || s >= end.copy().sub(origin).magnitude()) {
+            return null;
+        }
+
+        // We also only care about stuff that is in front of the ray
+        if (t <= 0) {
             return null;
         }
 
@@ -96,6 +102,26 @@ public class LinearSegment extends Mirror {
     }
 
     @Override
+    public int mapControlPoint(Vector p) {
+        if (ControlPointUtils.isInRadius(origin, p))
+            return 0;
+
+        if (ControlPointUtils.isInRadius(end, p))
+            return 1;
+
+        return -1;
+    }
+
+    @Override
+    public void adjust(int controlPoint, Vector value) {
+        if (controlPoint == 0)
+            origin.set(value);
+
+        if (controlPoint == 1)
+            end.set(value);
+    }
+
+    @Override
     public Ray reflection(Ray incident) {
         Vector I = incident.getDirection().copy();
         Vector N = normal(null); // The normal is not point dependent in this case
@@ -105,10 +131,12 @@ public class LinearSegment extends Mirror {
 
     @Override
     public void render(Graphics g) {
-        origin.render(g);
-        end.render(g);
+        if (renderEndpoints) {
+            origin.render(g);
+            end.render(g);
+        }
 
-        g.setColor(this.color);
+        g.setColor(color);
         g.drawLine((int) origin.getX(), View.WINDOW_HEIGHT - (int) origin.getY(), (int) end.getX(), View.WINDOW_HEIGHT - (int) end.getY());
     }
 

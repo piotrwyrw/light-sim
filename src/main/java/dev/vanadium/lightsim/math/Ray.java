@@ -5,10 +5,12 @@ import dev.vanadium.lightsim.visual.View;
 
 import java.awt.*;
 
-public class Ray implements Interpolable, Renderable {
+public class Ray extends Colorable implements Interpolable, Renderable {
 
     private Vector origin;
     private Vector direction;
+
+    private boolean renderOrigin = true;
 
     public Ray(Vector origin, Vector direction) {
         this.origin = origin;
@@ -31,15 +33,22 @@ public class Ray implements Interpolable, Renderable {
         this.direction = direction.copy().normalize();
     }
 
+    public Ray noOriginRendering() {
+        this.renderOrigin = false;
+        return this;
+    }
+
     @Override
     public void render(Graphics g) {
         Vector end = interpolate(View.WINDOW_HEIGHT + View.WINDOW_WIDTH);
 
-        g.setColor(Color.decode("#ecf0f1"));
-        g.drawLine((int) origin.getX(), View.WINDOW_HEIGHT - (int) origin.getY(), (int) end.getX(),View.WINDOW_HEIGHT - (int) end.getY());
+        g.setColor(color);
+        g.drawLine((int) origin.getX(), View.WINDOW_HEIGHT - (int) origin.getY(), (int) end.getX(), View.WINDOW_HEIGHT - (int) end.getY());
 
-        g.setColor(Color.decode("#1abc9c"));
-        g.fillOval((int) origin.getX() - 4, View.WINDOW_HEIGHT - (int) origin.getY() - 4, 8, 8);
+        if (renderOrigin) {
+            g.setColor(Color.decode("#1abc9c"));
+            g.fillOval((int) origin.getX() - 4, View.WINDOW_HEIGHT - (int) origin.getY() - 4, 8, 8);
+        }
     }
 
     @Override
