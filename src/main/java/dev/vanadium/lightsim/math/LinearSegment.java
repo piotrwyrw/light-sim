@@ -122,14 +122,6 @@ public class LinearSegment extends Mirror {
     }
 
     @Override
-    public Ray reflection(Ray incident) {
-        Vector I = incident.getDirection().copy();
-        Vector N = normal(null); // The normal is not point dependent in this case
-        Vector R = I.copy().sub(N.copy().mul(2 * I.dot(N)));
-        return R.asRay(intersection(incident).getLocation());
-    }
-
-    @Override
     public void render(Graphics g) {
         if (renderEndpoints) {
             origin.render(g);

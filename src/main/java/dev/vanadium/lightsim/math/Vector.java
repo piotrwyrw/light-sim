@@ -88,6 +88,10 @@ public class Vector extends Colorable implements Renderable {
         return this.x == another.x && this.y == another.y;
     }
 
+    public boolean withinRadius(Vector of, double radius) {
+        return copy().sub(of).magnitude() <= radius;
+    }
+
     public Vector copy() {
         return new Vector(x, y);
     }

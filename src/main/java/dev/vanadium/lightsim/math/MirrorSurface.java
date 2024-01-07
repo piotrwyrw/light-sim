@@ -1,7 +1,5 @@
 package dev.vanadium.lightsim.math;
 
-import java.awt.*;
-
 public interface MirrorSurface {
 
     Intersection intersection(Ray ray);

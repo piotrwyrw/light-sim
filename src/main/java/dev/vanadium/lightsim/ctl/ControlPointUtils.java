@@ -2,8 +2,6 @@ package dev.vanadium.lightsim.ctl;
 
 import dev.vanadium.lightsim.math.Vector;
 
-import java.awt.*;
-
 public class ControlPointUtils {
 
     public static final int CONTROL_POINT_RADIUS = 40;

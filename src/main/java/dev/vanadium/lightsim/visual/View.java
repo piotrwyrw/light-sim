@@ -5,21 +5,16 @@ import dev.vanadium.lightsim.math.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class View extends JPanel {
 
-    public static final int WINDOW_WIDTH = 1500;
-    public static final int WINDOW_HEIGHT = 800;
-
-    public static final int BOUNCE_LIMIT = 10000;
-
-    public static final double EPSILON = 0.1;
-
+    public static final int BOUNCE_LIMIT = 50;
+    public static final double EPSILON = 0.000000000001;
+    public static int WINDOW_WIDTH = 1500;
+    public static int WINDOW_HEIGHT = 800;
     private final JFrame frame;
 
     private List<Ray> rays;
@@ -34,12 +29,14 @@ public class View extends JPanel {
 
     private boolean pathInspection = false;
 
-    public View() {
+    public View() throws UnsupportedLookAndFeelException, ClassNotFoundException, InstantiationException, IllegalAccessException {
         super();
+
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
         frame = new JFrame("Light Simulator");
         frame.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-        frame.setResizable(false);
+        frame.setResizable(true);
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(this);
@@ -50,12 +47,13 @@ public class View extends JPanel {
         mirrors = new ArrayList<>();
         mirrors.add(new LinearSegment(new Vector(500, 100), new Vector(700, 400)));
         mirrors.add(new LinearSegment(new Vector(300, 300), new Vector(400, 600)));
-
-        Vector rayDirection = new Vector(-1, 0);
+        mirrors.add(new Circle(new Vector(500, 500), 100));
 
         rays = new ArrayList<>();
         for (int i = 0; i < 1; i++) {
-            rays.add(new Ray(new Vector(1200, 500 - i * 3), rayDirection));
+            Vector direction = new Vector(-1, 0);
+
+            rays.add(new Ray(new Vector(1200, 500 - i * 7), direction));
         }
 
         frame.addMouseListener(new MouseListener() {
@@ -104,21 +102,27 @@ public class View extends JPanel {
         frame.addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
-                mouse = Vector.from(e.getPoint());
-                mouse.setY(View.WINDOW_HEIGHT - mouse.getY());
+                mouse = Vector.from(e.getPoint()).compensateInversion();
 
                 if (e.getButton() == MouseEvent.BUTTON1) {
                     if (controlPoint == null)
                         return;
 
-                    controlPoint.getHolder().adjust(controlPoint.getId(), Vector.from(e.getPoint()).map(vec -> new Vector(vec.getX(), WINDOW_HEIGHT - vec.getY())));
+                    controlPoint.getHolder().adjust(controlPoint.getId(), Vector.from(e.getPoint()).compensateInversion());
                 }
             }
 
             @Override
             public void mouseMoved(MouseEvent e) {
-                mouse = Vector.from(e.getPoint());
-                mouse.setY(View.WINDOW_HEIGHT - mouse.getY());
+                mouse = Vector.from(e.getPoint()).compensateInversion();
+            }
+        });
+
+        frame.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                WINDOW_WIDTH = frame.getWidth();
+                WINDOW_HEIGHT = frame.getHeight();
             }
         });
 
@@ -149,7 +153,7 @@ public class View extends JPanel {
     }
 
     private void selectControlPoint(Point mouse) {
-        Vector mouseVec = Vector.from(mouse).map(vec -> new Vector(vec.getX(), WINDOW_HEIGHT - vec.getY()));
+        Vector mouseVec = Vector.from(mouse).compensateInversion();
         for (MirrorSurface mirror : mirrors) {
             int ctl = mirror.mapControlPoint(mouseVec);
             if (ctl < 0)
@@ -190,7 +194,9 @@ public class View extends JPanel {
                     break;
                 }
 
-                i.getObject().normal(i).render(g);
+                i.getObject().normal(i).colored(Color.RED).render(g);
+
+                i.colored(Color.BLUE).render(g);
 
                 lastIntersection = i;
 
